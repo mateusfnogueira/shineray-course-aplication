@@ -1,0 +1,1 @@
+export const EMAIL_ADAPTER = 'EMAIL_ADAPTER';

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for f:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $f ===\")",
+      "Read(//home/groque25/apps/mareApp/**)",
+      "Bash(done)",
+      "WebSearch"
+    ]
+  }
+}

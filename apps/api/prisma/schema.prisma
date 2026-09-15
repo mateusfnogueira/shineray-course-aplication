@@ -1,0 +1,641 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  MASTER_ADMIN
+  STORE_ADMIN
+  STUDENT
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CourseAssignmentType {
+  OPTIONAL
+  REQUIRED
+}
+
+enum EnrollmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  EXPIRED
+}
+
+enum LessonType {
+  VIDEO
+  SLIDES
+  DOCUMENT
+  TEXT
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  PASSED
+  FAILED
+}
+
+enum LegalDocumentType {
+  TERMS_OF_USE
+  PRIVACY_POLICY
+}
+
+// ─── Store ────────────────────────────────────────────────────────────────────
+
+model Store {
+  id        String    @id @default(uuid())
+  name      String
+  code      String    @unique
+  document  String?
+  region    String?
+  city      String?
+  state     String?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  users              User[]
+  courseStoreAccess  CourseStoreAccess[]
+  announcementStores AnnouncementStore[]
+
+  @@index([active])
+  @@index([deletedAt])
+  @@map("stores")
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id                     String     @id @default(uuid())
+  name                   String
+  email                  String     @unique
+  passwordHash           String?    @map("password_hash")
+  role                   UserRole
+  status                 UserStatus @default(INVITED)
+  storeId                String?    @map("store_id")
+  phone                  String?
+  position               String?
+  firstAccessCompletedAt DateTime?  @map("first_access_completed_at")
+  lastLoginAt            DateTime?  @map("last_login_at")
+  loginFailedAttempts    Int        @default(0) @map("login_failed_attempts")
+  loginBlockedUntil      DateTime?  @map("login_blocked_until")
+  createdById            String?    @map("created_by_id")
+  createdAt              DateTime   @default(now()) @map("created_at")
+  updatedAt              DateTime   @updatedAt @map("updated_at")
+  deletedAt              DateTime?  @map("deleted_at")
+
+  store                Store?               @relation(fields: [storeId], references: [id])
+  createdBy            User?                @relation("CreatedBy", fields: [createdById], references: [id])
+  createdUsers         User[]               @relation("CreatedBy")
+  sessions             Session[]
+  activationTokens     ActivationToken[]
+  passwordResetTokens  PasswordResetToken[]
+  legalAcceptances     LegalAcceptance[]
+  enrollments          Enrollment[]
+  certificates         Certificate[]
+  favorites            Favorite[]
+  notifications        Notification[]
+  createdCourses       Course[]
+  createdAnnouncements Announcement[]
+  createdTrails        Trail[]
+  auditLogs            AuditLog[]           @relation("ActorAuditLog")
+
+  @@index([storeId])
+  @@index([email])
+  @@index([status])
+  @@index([role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// ─── Session ──────────────────────────────────────────────────────────────────
+
+model Session {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  refreshTokenHash String    @map("refresh_token_hash")
+  userAgent        String?   @map("user_agent")
+  ipAddress        String?   @map("ip_address")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ─── ActivationToken ─────────────────────────────────────────────────────────
+
+model ActivationToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("activation_tokens")
+}
+
+// ─── PasswordResetToken ───────────────────────────────────────────────────────
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ─── LegalDocument ────────────────────────────────────────────────────────────
+
+model LegalDocument {
+  id          String            @id @default(uuid())
+  type        LegalDocumentType
+  title       String
+  version     String
+  content     String            @db.Text
+  active      Boolean           @default(false)
+  publishedAt DateTime?         @map("published_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  acceptances LegalAcceptance[]
+
+  @@index([type, active])
+  @@map("legal_documents")
+}
+
+// ─── LegalAcceptance ──────────────────────────────────────────────────────────
+
+model LegalAcceptance {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  legalDocumentId String   @map("legal_document_id")
+  ipAddress       String?  @map("ip_address")
+  userAgent       String?  @map("user_agent")
+  acceptedAt      DateTime @default(now()) @map("accepted_at")
+
+  user          User          @relation(fields: [userId], references: [id])
+  legalDocument LegalDocument @relation(fields: [legalDocumentId], references: [id])
+
+  @@unique([userId, legalDocumentId])
+  @@index([userId])
+  @@map("legal_acceptances")
+}
+
+// ─── Course ───────────────────────────────────────────────────────────────────
+
+model Course {
+  id                       String       @id @default(uuid())
+  title                    String
+  slug                     String       @unique
+  shortDescription         String       @map("short_description")
+  description              String       @db.Text
+  coverImageUrl            String?      @map("cover_image_url")
+  estimatedDurationMinutes Int          @map("estimated_duration_minutes")
+  minimumPassingScore      Int?         @map("minimum_passing_score")
+  maximumAttempts          Int?         @map("maximum_attempts")
+  status                   CourseStatus @default(DRAFT)
+  certificateEnabled       Boolean      @default(false) @map("certificate_enabled")
+  publishedAt              DateTime?    @map("published_at")
+  createdById              String       @map("created_by_id")
+  createdAt                DateTime     @default(now()) @map("created_at")
+  updatedAt                DateTime     @updatedAt @map("updated_at")
+  deletedAt                DateTime?    @map("deleted_at")
+
+  createdBy    User                @relation(fields: [createdById], references: [id])
+  modules      CourseModule[]
+  storeAccess  CourseStoreAccess[]
+  enrollments  Enrollment[]
+  quiz         Quiz?
+  certificates Certificate[]
+  favorites    Favorite[]
+  trailCourses TrailCourse[]
+
+  @@index([status])
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("courses")
+}
+
+// ─── CourseStoreAccess ────────────────────────────────────────────────────────
+
+model CourseStoreAccess {
+  id             String               @id @default(uuid())
+  courseId       String               @map("course_id")
+  storeId        String               @map("store_id")
+  assignmentType CourseAssignmentType @map("assignment_type")
+  availableFrom  DateTime?            @map("available_from")
+  availableUntil DateTime?            @map("available_until")
+  active         Boolean              @default(true)
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+
+  course Course @relation(fields: [courseId], references: [id])
+  store  Store  @relation(fields: [storeId], references: [id])
+
+  @@unique([courseId, storeId])
+  @@index([storeId])
+  @@index([courseId])
+  @@map("course_store_access")
+}
+
+// ─── CourseModule ─────────────────────────────────────────────────────────────
+
+model CourseModule {
+  id          String   @id @default(uuid())
+  courseId    String   @map("course_id")
+  title       String
+  description String?
+  order       Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  course  Course   @relation(fields: [courseId], references: [id])
+  lessons Lesson[]
+
+  @@index([courseId])
+  @@map("course_modules")
+}
+
+// ─── Lesson ───────────────────────────────────────────────────────────────────
+
+model Lesson {
+  id              String     @id @default(uuid())
+  moduleId        String     @map("module_id")
+  title           String
+  description     String?
+  type            LessonType
+  order           Int
+  required        Boolean    @default(true)
+  durationMinutes Int?       @map("duration_minutes")
+  youtubeVideoId  String?    @map("youtube_video_id")
+  youtubeEmbedUrl String?    @map("youtube_embed_url")
+  textContent     String?    @db.Text @map("text_content")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  module         CourseModule     @relation(fields: [moduleId], references: [id])
+  materials      LessonMaterial[]
+  lessonProgress LessonProgress[]
+
+  @@index([moduleId])
+  @@map("lessons")
+}
+
+// ─── LessonMaterial ───────────────────────────────────────────────────────────
+
+model LessonMaterial {
+  id        String   @id @default(uuid())
+  lessonId  String   @map("lesson_id")
+  title     String
+  fileUrl   String   @map("file_url")
+  fileType  String?  @map("file_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  lesson Lesson @relation(fields: [lessonId], references: [id])
+
+  @@index([lessonId])
+  @@map("lesson_materials")
+}
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+
+model Quiz {
+  id                  String   @id @default(uuid())
+  courseId            String   @unique @map("course_id")
+  title               String
+  description         String?
+  minimumPassingScore Int      @map("minimum_passing_score")
+  maximumAttempts     Int?     @map("maximum_attempts")
+  shuffleQuestions    Boolean  @default(false) @map("shuffle_questions")
+  shuffleAnswers      Boolean  @default(false) @map("shuffle_answers")
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  course    Course        @relation(fields: [courseId], references: [id])
+  questions Question[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+// ─── Question ─────────────────────────────────────────────────────────────────
+
+model Question {
+  id          String       @id @default(uuid())
+  quizId      String       @map("quiz_id")
+  statement   String       @db.Text
+  type        QuestionType
+  explanation String?      @db.Text
+  order       Int
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  quiz    Quiz             @relation(fields: [quizId], references: [id])
+  options QuestionOption[]
+  answers QuizAnswer[]
+
+  @@index([quizId])
+  @@map("questions")
+}
+
+// ─── QuestionOption ───────────────────────────────────────────────────────────
+
+model QuestionOption {
+  id         String   @id @default(uuid())
+  questionId String   @map("question_id")
+  text       String
+  isCorrect  Boolean  @default(false) @map("is_correct")
+  order      Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  question    Question     @relation(fields: [questionId], references: [id])
+  quizAnswers QuizAnswer[] @relation("SelectedOptions")
+
+  @@index([questionId])
+  @@map("question_options")
+}
+
+// ─── Enrollment ───────────────────────────────────────────────────────────────
+
+model Enrollment {
+  id                 String           @id @default(uuid())
+  userId             String           @map("user_id")
+  courseId           String           @map("course_id")
+  status             EnrollmentStatus @default(NOT_STARTED)
+  progressPercentage Decimal          @default(0) @db.Decimal(5, 2) @map("progress_percentage")
+  startedAt          DateTime?        @map("started_at")
+  completedAt        DateTime?        @map("completed_at")
+  expiresAt          DateTime?        @map("expires_at")
+  lastAccessedAt     DateTime?        @map("last_accessed_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  user           User             @relation(fields: [userId], references: [id])
+  course         Course           @relation(fields: [courseId], references: [id])
+  lessonProgress LessonProgress[]
+  quizAttempts   QuizAttempt[]
+  certificate    Certificate?
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+  @@map("enrollments")
+}
+
+// ─── LessonProgress ───────────────────────────────────────────────────────────
+
+model LessonProgress {
+  id                  String    @id @default(uuid())
+  enrollmentId        String    @map("enrollment_id")
+  lessonId            String    @map("lesson_id")
+  startedAt           DateTime? @map("started_at")
+  completedAt         DateTime? @map("completed_at")
+  watchedSeconds      Int?      @map("watched_seconds")
+  lastPositionSeconds Int?      @map("last_position_seconds")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  lesson     Lesson     @relation(fields: [lessonId], references: [id])
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId])
+  @@index([lessonId])
+  @@map("lesson_progress")
+}
+
+// ─── QuizAttempt ──────────────────────────────────────────────────────────────
+
+model QuizAttempt {
+  id            String        @id @default(uuid())
+  quizId        String        @map("quiz_id")
+  enrollmentId  String        @map("enrollment_id")
+  attemptNumber Int           @map("attempt_number")
+  status        AttemptStatus @default(IN_PROGRESS)
+  score         Decimal?      @db.Decimal(5, 2)
+  passed        Boolean?
+  startedAt     DateTime      @default(now()) @map("started_at")
+  submittedAt   DateTime?     @map("submitted_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  quiz       Quiz         @relation(fields: [quizId], references: [id])
+  enrollment Enrollment   @relation(fields: [enrollmentId], references: [id])
+  answers    QuizAnswer[]
+
+  @@index([quizId])
+  @@index([enrollmentId])
+  @@map("quiz_attempts")
+}
+
+// ─── QuizAnswer ───────────────────────────────────────────────────────────────
+
+model QuizAnswer {
+  id            String   @id @default(uuid())
+  quizAttemptId String   @map("quiz_attempt_id")
+  questionId    String   @map("question_id")
+  correct       Boolean?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  quizAttempt     QuizAttempt      @relation(fields: [quizAttemptId], references: [id])
+  question        Question         @relation(fields: [questionId], references: [id])
+  selectedOptions QuestionOption[] @relation("SelectedOptions")
+
+  @@index([quizAttemptId])
+  @@index([questionId])
+  @@map("quiz_answers")
+}
+
+// ─── Certificate ──────────────────────────────────────────────────────────────
+
+model Certificate {
+  id              String    @id @default(uuid())
+  enrollmentId    String    @unique @map("enrollment_id")
+  userId          String    @map("user_id")
+  courseId        String    @map("course_id")
+  certificateCode String    @unique @map("certificate_code")
+  issuedAt        DateTime  @default(now()) @map("issued_at")
+  expiresAt       DateTime? @map("expires_at")
+  revokedAt       DateTime? @map("revoked_at")
+  fileUrl         String?   @map("file_url")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+  course     Course     @relation(fields: [courseId], references: [id])
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([certificateCode])
+  @@map("certificates")
+}
+
+// ─── Favorite ─────────────────────────────────────────────────────────────────
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  courseId  String   @map("course_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@map("favorites")
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  title     String
+  message   String
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([readAt])
+  @@map("notifications")
+}
+
+// ─── Announcement ─────────────────────────────────────────────────────────────
+
+model Announcement {
+  id             String    @id @default(uuid())
+  title          String
+  content        String    @db.Text
+  bannerImageUrl String?   @map("banner_image_url")
+  startsAt       DateTime? @map("starts_at")
+  endsAt         DateTime? @map("ends_at")
+  active         Boolean   @default(true)
+  createdById    String    @map("created_by_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  createdBy          User                @relation(fields: [createdById], references: [id])
+  announcementStores AnnouncementStore[]
+
+  @@index([active])
+  @@index([startsAt, endsAt])
+  @@map("announcements")
+}
+
+// ─── AnnouncementStore ────────────────────────────────────────────────────────
+
+model AnnouncementStore {
+  announcementId String @map("announcement_id")
+  storeId        String @map("store_id")
+
+  announcement Announcement @relation(fields: [announcementId], references: [id])
+  store        Store        @relation(fields: [storeId], references: [id])
+
+  @@id([announcementId, storeId])
+  @@map("announcement_stores")
+}
+
+// ─── AuditLog ─────────────────────────────────────────────────────────────────
+// Append-only — never update or delete records in this table.
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorUserId  String?  @map("actor_user_id")
+  action       String
+  entityType   String   @map("entity_type")
+  entityId     String?  @map("entity_id")
+  previousData Json?    @map("previous_data")
+  newData      Json?    @map("new_data")
+  ipAddress    String?  @map("ip_address")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  actorUser User? @relation("ActorAuditLog", fields: [actorUserId], references: [id])
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── Trail ────────────────────────────────────────────────────────────────────
+
+model Trail {
+  id            String    @id @default(uuid())
+  title         String
+  slug          String    @unique
+  description   String    @db.Text
+  coverImageUrl String?   @map("cover_image_url")
+  active        Boolean   @default(true)
+  createdById   String    @map("created_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  createdBy User          @relation(fields: [createdById], references: [id])
+  courses   TrailCourse[]
+
+  @@index([active])
+  @@index([deletedAt])
+  @@map("trails")
+}
+
+model TrailCourse {
+  id        String   @id @default(uuid())
+  trailId   String   @map("trail_id")
+  courseId  String   @map("course_id")
+  order     Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  trail  Trail  @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([trailId, courseId])
+  @@index([trailId])
+  @@index([courseId])
+  @@map("trail_courses")
+}

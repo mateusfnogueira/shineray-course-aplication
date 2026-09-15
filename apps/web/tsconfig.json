@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@compliance/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"],
+      "@compliance/shared": ["../../packages/shared/src"],
+      "@compliance/shared/*": ["../../packages/shared/src/*"],
+      "@compliance/validation": ["../../packages/validation/src"],
+      "@compliance/validation/*": ["../../packages/validation/src/*"],
+      "@compliance/ui": ["../../packages/ui/src"],
+      "@compliance/ui/*": ["../../packages/ui/src/*"],
+      "@compliance/api-client": ["../../packages/api-client/src"],
+      "@compliance/api-client/*": ["../../packages/api-client/src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "e2e/**"]
+}
