@@ -5,10 +5,10 @@ const CORPORATE_DOMAIN = '@shineray.com';
 const corporateEmailSchema = z
   .string()
   .email('E-mail inválido')
-  .refine(
-    (email) => email.toLowerCase().endsWith(CORPORATE_DOMAIN),
-    `Use seu e-mail corporativo ${CORPORATE_DOMAIN}`,
-  );
+  // .refine(
+  //   (email) => email.toLowerCase().endsWith(CORPORATE_DOMAIN),
+  //   `Use seu e-mail corporativo ${CORPORATE_DOMAIN}`,
+  // );
 
 const passwordSchema = z
   .string()
