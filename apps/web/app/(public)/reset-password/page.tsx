@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +12,7 @@ import { resetPasswordSchema } from '@compliance/validation';
 import type { ResetPasswordInput } from '@compliance/validation';
 import { resetPassword, AuthApiError } from '@/lib/auth';
 
-export default function ResetPasswordPage(): React.JSX.Element {
+function ResetPasswordContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
@@ -109,5 +110,13 @@ export default function ResetPasswordPage(): React.JSX.Element {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage(): React.JSX.Element {
+  return (
+    <Suspense>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

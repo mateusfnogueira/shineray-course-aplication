@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -47,7 +48,7 @@ function findFirstUncompletedLesson(enrollment: EnrollmentDetailDto): LessonWith
   return enrollment.modules[0]?.lessons[0] ?? null;
 }
 
-export default function LearnPage(): React.JSX.Element {
+function LearnContent(): React.JSX.Element {
   const { courseId } = useParams<{ courseId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -337,5 +338,13 @@ export default function LearnPage(): React.JSX.Element {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LearnPage(): React.JSX.Element {
+  return (
+    <Suspense>
+      <LearnContent />
+    </Suspense>
   );
 }

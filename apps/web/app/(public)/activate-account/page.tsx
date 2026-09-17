@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +12,7 @@ import type { ActivateAccountInput } from '@compliance/validation';
 import { activateAccount, AuthApiError } from '@/lib/auth';
 import { UserRole } from '@compliance/shared';
 
-export default function ActivateAccountPage(): React.JSX.Element {
+function ActivateAccountContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
@@ -124,5 +125,13 @@ export default function ActivateAccountPage(): React.JSX.Element {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ActivateAccountPage(): React.JSX.Element {
+  return (
+    <Suspense>
+      <ActivateAccountContent />
+    </Suspense>
   );
 }
