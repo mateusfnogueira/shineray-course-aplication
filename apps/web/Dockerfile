@@ -31,6 +31,8 @@ COPY packages                                   ./packages
 COPY apps/web                                   ./apps/web
 
 RUN pnpm install --frozen-lockfile --prefer-offline
+# cap heap to avoid OOM on small instances (t2.micro = 1 GB RAM)
+ENV NODE_OPTIONS="--max-old-space-size=768"
 RUN pnpm --filter @compliance/web build
 
 # ── Stage 3: runtime ──────────────────────────────────────────────────────────

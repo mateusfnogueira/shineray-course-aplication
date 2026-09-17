@@ -24,7 +24,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {},
+  experimental: {
+    cpus: 1, // limit parallel workers for low-memory builds
+  },
 };
 
 export default nextConfig;
