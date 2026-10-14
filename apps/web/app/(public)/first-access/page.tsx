@@ -7,7 +7,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button, Input } from '@compliance/ui';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { firstAccessSchema } from '@compliance/validation';
 import type { FirstAccessInput } from '@compliance/validation';
 import { forgotPassword, AuthApiError } from '@/lib/auth';
@@ -56,9 +63,9 @@ export default function FirstAccessPage(): React.JSX.Element {
           <div className="w-full rounded-2xl bg-white shadow-sm px-8 py-8">
             <Link
               href="/login"
-              className="inline-flex items-center gap-1 text-sm text-[#6B6B7B] hover:text-[#C8151B] transition-colors mb-6"
+              className="inline-flex items-center gap-1 whitespace-nowrap text-sm text-[#6B6B7B] hover:text-[#C8151B] transition-colors mb-6"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
               Voltar ao login
             </Link>
 
@@ -78,28 +85,37 @@ export default function FirstAccessPage(): React.JSX.Element {
                 </div>
                 <h2 className="text-lg font-semibold text-[#111111] mt-3">E-mail enviado!</h2>
                 <p className="text-sm text-[#6B6B7B]">
-                  Se o e-mail estiver cadastrado, você receberá o link de criação de senha em instantes.
-                  Verifique sua caixa de entrada.
+                  Se o e-mail estiver cadastrado, você receberá o link de criação de senha em
+                  instantes. Verifique sua caixa de entrada.
                 </p>
               </div>
             ) : (
               <>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#C8151B]/20 bg-[#C8151B]/10 px-3 py-1 mb-4">
-                  <Image
-                    src="/icons/shineray-icon.png"
-                    alt=""
-                    aria-hidden="true"
-                    width={16}
-                    height={16}
-                  />
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#C8151B]">
-                    Primeiro Acesso
-                  </span>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="inline-flex items-center justify-center rounded-lg border border-[#C8151B]/20 bg-[#C8151B]/10 p-2.5">
+                    <Image
+                      src="/icons/shineray-icon.png"
+                      alt=""
+                      aria-hidden="true"
+                      width={14}
+                      height={14}
+                    />
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <div className="inline-flex items-center rounded-full border border-[#C8151B]/20 bg-[#C8151B]/10 px-3 py-0.5">
+                      <span className="text-[8px] font-semibold uppercase tracking-widest text-[#C8151B]">
+                        Primeiro Acesso
+                      </span>
+                    </div>
+                    <h2 className="[font-family:var(--font-outfit)] text-[8px] font-normal leading-[12px] tracking-normal text-[#9CA3AF]">
+                      Ativação de conta Shineray
+                    </h2>
+                  </div>
                 </div>
 
-                <h2 className="text-xl font-bold text-[#111111] mb-1">Ativação de conta Shineray</h2>
                 <p className="text-sm text-[#6B6B7B] mb-6">
-                  Informe o e-mail cadastrado pela Shineray para receber o link de criação da sua senha.
+                  Informe o e-mail cadastrado pela Shineray para receber o link de criação da sua
+                  senha.
                 </p>
 
                 <Form {...form}>
