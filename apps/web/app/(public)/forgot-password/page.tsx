@@ -5,9 +5,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Info } from 'lucide-react';
 import { Button, Input } from '@compliance/ui';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { forgotPasswordSchema } from '@compliance/validation';
 import type { ForgotPasswordInput } from '@compliance/validation';
 import { forgotPassword, AuthApiError } from '@/lib/auth';
@@ -53,12 +60,12 @@ export default function ForgotPasswordPage(): React.JSX.Element {
             priority
           />
 
-          <div className="w-full rounded-2xl bg-white shadow-sm px-8 py-8">
+          <div className=" flex flex-col w-full rounded-2xl bg-white shadow-sm px-8 py-8">
             <Link
               href="/login"
-              className="inline-flex items-center gap-1 text-sm text-[#6B6B7B] hover:text-[#C8151B] transition-colors mb-6"
+              className="inline-flex items-center gap-1 whitespace-nowrap text-sm text-[#6B6B7B] hover:text-[#C8151B] transition-colors mb-6"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
               Voltar ao login
             </Link>
 
@@ -66,14 +73,25 @@ export default function ForgotPasswordPage(): React.JSX.Element {
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold text-[#111111]">E-mail enviado!</h2>
                 <p className="text-sm text-[#6B6B7B]">
-                  Se este e-mail estiver cadastrado, você receberá as instruções de redefinição de senha em instantes.
+                  Se este e-mail estiver cadastrado, você receberá as instruções de redefinição de
+                  senha em instantes.
                 </p>
               </div>
             ) : (
               <>
-                <h2 className="text-xl font-bold text-[#111111] mb-1">Esqueceu a senha?</h2>
+                <div className="inline-flex items-center justify-center rounded-xl border border-[#C8151B]/20 bg-[#C8151B]/10 p-3 mb-4 max-h-10 max-w-10">
+                  <img
+                    src="/icons/key-red-icon.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-6 w-6"
+                  />
+                </div>
+
+                <h2 className="text-xl font-bold text-[#111111] mb-1">Recuperar senha</h2>
                 <p className="text-sm text-[#6B6B7B] mb-6">
-                  Informe seu e-mail corporativo para receber o link de redefinição.
+                  Informe o e-mail corporativo vinculado à sua conta. Enviaremos um link para criar
+                  uma nova senha.
                 </p>
 
                 <Form {...form}>
@@ -105,12 +123,15 @@ export default function ForgotPasswordPage(): React.JSX.Element {
                               />
                               <Input
                                 type="email"
-                                placeholder="nome@shineray.com"
+                                placeholder="nome@shineray.com.br"
                                 autoComplete="email"
                                 className="pl-9 text-[#6B6B7B] placeholder:text-[#C4C4CC]"
                                 {...field}
                               />
                             </div>
+                            <p className="text-xs text-[#9CA3AF] mt-1">
+                              Use o mesmo e-mail cadastrado na rede Shineray.
+                            </p>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -123,8 +144,24 @@ export default function ForgotPasswordPage(): React.JSX.Element {
                       disabled={form.formState.isSubmitting}
                     >
                       {form.formState.isSubmitting ? 'Enviando…' : 'Enviar link de recuperação'}
-                      {!form.formState.isSubmitting && <ChevronRight className="ml-1 h-4 w-4" />}
+                      {!form.formState.isSubmitting && (
+                        <img
+                          src="/icons/mail-icon.svg"
+                          alt=""
+                          aria-hidden="true"
+                          className="ml-2 h-4 w-4 brightness-0 invert"
+                        />
+                      )}
                     </Button>
+
+                    <div className="flex gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                      <Info className="h-4 w-4 shrink-0 text-[#9CA3AF] mt-0.5" />
+                      <p className="text-xs text-[#6B6B7B]">
+                        O link de recuperação expira em{' '}
+                        <strong className="font-semibold text-[#111111]">30 minutos</strong>.
+                        Verifique também sua caixa de spam.
+                      </p>
+                    </div>
                   </form>
                 </Form>
               </>
