@@ -65,9 +65,9 @@ COPY --from=builder --chown=nestjs:nodejs \
 COPY --from=builder --chown=nestjs:nodejs \
     /app/packages ./packages
 
-# Build do NestJS
+# Build do NestJS — must live at apps/api/dist so Node resolves from apps/api/node_modules
 COPY --from=builder --chown=nestjs:nodejs \
-    /app/apps/api/dist ./dist
+    /app/apps/api/dist ./apps/api/dist
 
 # Schema e migrations
 COPY --from=builder --chown=nestjs:nodejs \
@@ -85,4 +85,4 @@ EXPOSE 3001
 
 ENTRYPOINT ["sh", "./docker-entrypoint.sh"]
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/api/dist/main.js"]
