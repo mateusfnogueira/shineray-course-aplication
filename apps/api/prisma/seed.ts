@@ -7,7 +7,7 @@ import * as argon2 from "argon2";
 const prisma = new PrismaClient();
 const CREDS = { masterAdmin: { email: "mateusfranco@gmail.com", name: "Mateus Franco", password: "Admin@2026!" }, adminAEmail: "admin-a@compliance.local", adminBEmail: "admin-b@compliance.local", adminPassword: "Admin@2026!", studentPassword: "Student@2026!" };
 function slugify(t: string): string { return t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/[^a-z0-9\s-]/g,"").replace(/[\s_]+/g,"-").replace(/-{2,}/g,"-").replace(/^-+|-+$/g,""); }
-async function up(email: string, name: string, role: UserRole, storeId: string, ph: string, cById: string) { return prisma.user.upsert({ where:{email}, create:{name,email,passwordHash:ph,role,status:"ACTIVE",storeId,createdById:cById,firstAccessCompletedAt:new Date()}, update:{} }); }
+async function up(email: string, name: string, role: UserRole, storeId: string, ph: string, cById: string) { return prisma.user.upsert({ where:{email}, create:{name,email,passwordHash:ph,role,status:"ACTIVE",storeId,createdById:cById,firstAccessCompletedAt:new Date()}, update:{passwordHash:ph,status:"ACTIVE",firstAccessCompletedAt:new Date()} }); }
 async function al(uid: string, dids: string[]) { for(const d of dids) await prisma.legalAcceptance.upsert({where:{userId_legalDocumentId:{userId:uid,legalDocumentId:d}},create:{userId:uid,legalDocumentId:d},update:{}}); }
 async function main(): Promise<void> {
   console.log("\n🌱  Running full development seed…\n");
@@ -17,7 +17,7 @@ async function main(): Promise<void> {
   ]);
   console.log("✅ Legal documents");
   const mh = await argon2.hash(CREDS.masterAdmin.password);
-  const ma = await prisma.user.upsert({where:{email:CREDS.masterAdmin.email},create:{name:CREDS.masterAdmin.name,email:CREDS.masterAdmin.email,passwordHash:mh,role:UserRole.MASTER_ADMIN,status:"ACTIVE",firstAccessCompletedAt:new Date()},update:{}});
+  const ma = await prisma.user.upsert({where:{email:CREDS.masterAdmin.email},create:{name:CREDS.masterAdmin.name,email:CREDS.masterAdmin.email,passwordHash:mh,role:UserRole.MASTER_ADMIN,status:"ACTIVE",firstAccessCompletedAt:new Date()},update:{passwordHash:mh,status:"ACTIVE"}});
   await al(ma.id,[terms.id,privacy.id]);
   console.log("✅ MASTER_ADMIN:", ma.email);
   const [sA,sB] = await Promise.all([

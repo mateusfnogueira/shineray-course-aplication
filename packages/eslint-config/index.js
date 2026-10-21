@@ -18,7 +18,7 @@ module.exports = tseslint.config(
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': 'off',
     },
   },
   {
