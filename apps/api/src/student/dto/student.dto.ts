@@ -124,6 +124,8 @@ export class StudentDashboardStatsDto {
   @ApiProperty() notStarted: number;
   @ApiProperty() requiredPending: number;
   @ApiProperty() overallProgressPercentage: number;
+  @ApiProperty() totalStudiedHours: number;
+  @ApiProperty() certificateCount: number;
 }
 
 export class StudentDashboardDto {

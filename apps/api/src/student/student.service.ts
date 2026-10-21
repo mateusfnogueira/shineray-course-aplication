@@ -65,20 +65,29 @@ export class StudentService {
       select: { name: true },
     });
 
-    const enrollments = await this.prisma.enrollment.findMany({
-      where: { userId },
-      orderBy: { lastAccessedAt: 'desc' },
-      include: {
-        course: {
-          include: {
-            storeAccess: { where: { storeId }, take: 1 },
-            favorites: { where: { userId }, take: 1 },
-            _count: { select: { modules: true } },
-            modules: { select: { _count: { select: { lessons: true } } } },
+    const [enrollments, watchedResult, certificateCount] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where: { userId },
+        orderBy: { lastAccessedAt: 'desc' },
+        include: {
+          course: {
+            include: {
+              storeAccess: { where: { storeId }, take: 1 },
+              favorites: { where: { userId }, take: 1 },
+              _count: { select: { modules: true } },
+              modules: { select: { _count: { select: { lessons: true } } } },
+            },
           },
         },
-      },
-    });
+      }),
+      this.prisma.lessonProgress.aggregate({
+        where: { enrollment: { userId } },
+        _sum: { watchedSeconds: true },
+      }),
+      this.prisma.certificate.count({ where: { userId } }),
+    ]);
+
+    const totalStudiedHours = Math.round((watchedResult._sum.watchedSeconds ?? 0) / 3600);
 
     const stats = {
       totalEnrollments: enrollments.length,
@@ -87,6 +96,8 @@ export class StudentService {
       notStarted: enrollments.filter((e) => e.status === EnrollmentStatus.NOT_STARTED).length,
       requiredPending: 0,
       overallProgressPercentage: 0,
+      totalStudiedHours,
+      certificateCount,
     };
 
     if (stats.totalEnrollments > 0) {
