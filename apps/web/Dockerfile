@@ -17,7 +17,7 @@ COPY packages/ui/package.json ./packages/ui/
 COPY packages/validation/package.json ./packages/validation/
 COPY apps/web/package.json ./apps/web/
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --filter @compliance/web...
 
 # ── Stage 2: Build ─────────────────────────────────
 FROM node:22-alpine AS builder
