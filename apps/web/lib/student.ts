@@ -108,6 +108,8 @@ export interface StudentDashboardDto {
     notStarted: number;
     requiredPending: number;
     overallProgressPercentage: number;
+    totalStudiedHours: number;
+    certificateCount: number;
   };
   requiredPending: StudentCourseDto[];
   inProgress: StudentCourseDto[];
