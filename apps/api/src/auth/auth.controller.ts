@@ -190,10 +190,23 @@ export class AuthController {
 
   private cookieDefaults(): CookieOptions {
     const isProd = process.env['NODE_ENV'] === 'production';
+    const secureCookieOverride = this.readBooleanEnv('AUTH_COOKIE_SECURE');
+    const secure = secureCookieOverride === null ? isProd : secureCookieOverride;
+
     return {
-      secure: isProd,
-      sameSite: isProd ? 'strict' : 'lax',
+      secure,
+      sameSite: secure ? 'strict' : 'lax',
     };
+  }
+
+  private readBooleanEnv(name: string): boolean | null {
+    const raw = process.env[name];
+    if (!raw) return null;
+
+    const normalized = raw.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+    return null;
   }
 
   private setTokenCookies(res: Response, accessToken: string, refreshToken: string): void {
